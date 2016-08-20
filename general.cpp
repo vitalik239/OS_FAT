@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <cstring>
 #include "general.h"
 
 
@@ -18,7 +19,7 @@ FILE* open_block(fs_info& fs, int node) {
 
 
 int get_empty_block(fs_info& fs) {
-	for (int i = 1; i < fs.fat.size(); i++) {
+	for (int i = 1; i < (int)fs.fat.size(); i++) {
         if (fs.fat[i] == -1) {
             fs.fat[i] = i;
             return i;

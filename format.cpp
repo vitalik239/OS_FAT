@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <unistd.h>
+#include <cstring>
 #include "general.h"
 
 char* root_path;
@@ -33,7 +34,7 @@ void init_fs() {
 	for (int i = 0; i < fat_size; i++) {
 		fs.fat[i] = -1;
 	}
-    for (int i = fat_size; i < fs.fat.size(); i++) {
+    for (int i = fat_size; i < (int)fs.fat.size(); i++) {
         fs.fat[i] = 0;
     }
 
