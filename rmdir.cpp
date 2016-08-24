@@ -33,12 +33,10 @@ int main(int agrc, char** argv) {
     fwrite(&descs, sizeof(int), 1, file);
     fclose(file);
 
-    descs--;
-    if ((descs == 0) && (dir.fat_pos == curr)) {
+    if ((descs == 0) && (dir.fat_pos != curr)) {
         fs.fat[curr] = -1;
         fs.fat[prev] = prev;
     }
-
 
     if ((last.type == T_DIR) && (strcmp(last.title, dir_name) == 0)) {
         remove_dir(fs, last);
