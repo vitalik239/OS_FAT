@@ -6,48 +6,30 @@
 fs_info fs;
 char* path;
 
-void print(int node) {
-	Descriptor des;
-	FILE* file = open_block(fs, fs.root_block + node);
-	fread(&des, sizeof(des), 1, file);
-	fclose(file);
-
-	int curr = node, next = fs.fat[node];
-	int list[INTS_IN_BLOCK];
-	int left = des.size;
-
-    while (curr != next) {
-		curr = next;
-		next = fs.fat[next];
-
-		file = open_block(fs, fs.root_block + curr);
-		fread(list, sizeof(int), INTS_IN_BLOCK, file);
-		fclose(file);
-
-		for (int i = 0; i < min(INTS_IN_BLOCK, left); i++) {
-			int check = list[i];
-            file = open_block(fs, fs.root_block + check);
-			fread(&des, sizeof(des), 1, file);
-			fclose(file);
-			printf("%s ", des.title);
-			if (des.type == T_DIR)
-				printf("directory\n");
-			else
-				printf("file\n");
-		}
-
-		if (left >= INTS_IN_BLOCK) {
-			left -= INTS_IN_BLOCK;
-		}
-	}
-
-}
-
 int main(int argc, char** argv) {
 	fs.root_path = argv[1];
 	read_fat(fs);
 	path = argv[2];
-    int dir_num = find_by_name(fs, T_DIR, path);
-	print(dir_num);
-	return 0;
+
+    Descriptor dir = find_by_name(fs, T_DIR, path);
+    Descriptor des;
+    int curr_block = dir.fat_pos, descs;
+    FILE* file;
+
+    while (true) {
+        file = open_block(fs, fs.root_block + curr_block);
+        fread(&descs, sizeof(int), 1, file);
+        for (int i = 0; i < descs; i++) {
+            fread(&des, sizeof(Descriptor), 1, file);
+            if (des.type == T_DIR)
+                printf("%s directory\n", des.title);
+            else
+                printf("%s file\n", des.title);
+        }
+        fclose(file);
+        if (curr_block == fs.fat[curr_block]) {
+            return 0;
+        }
+        curr_block = fs.fat[curr_block];
+    }
 }

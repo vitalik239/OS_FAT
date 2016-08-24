@@ -12,25 +12,24 @@
 char* root_path;
 int file_count;
 
-
 void create() {
-	char name[256];
+	char name[100];
 	for (int i = 0; i < file_count; i++) {
 		sprintf(name, "%s%s%d", root_path, "/block", i);
 		FILE* file = fopen(name, "w");
-		ftruncate(fileno(file), FILE_SIZE);
+		ftruncate(fileno(file), BLOCK_SIZE);
 		fclose(file);
 	}
 }
 
 void init_fs() {
 	fs_info fs;
-	int tot_blocks = BLOCKS_IN_FILE * file_count;
+	int tot_blocks = file_count;
 
 	int fat_blocks = ceil((tot_blocks + 1.0) * 4.0 / (BLOCK_SIZE + 4.0));
 	int fat_size = tot_blocks - fat_blocks;
 
-    fs.fat.resize(fat_blocks * BLOCK_SIZE / sizeof(int));
+    fs.fat.resize(fat_blocks * INTS_IN_BLOCK);
 	for (int i = 0; i < fat_size; i++) {
 		fs.fat[i] = -1;
 	}
@@ -42,15 +41,11 @@ void init_fs() {
 	fs.root_path = root_path;
 
     fs.fat[0] = 0;
+    write_fat(fs);
 
-    Descriptor desc(0, T_DIR);
-    strcpy(desc.title, "/");
-
+    int zero = 0;
     FILE* file = open_block(fs, fs.root_block);
-    fwrite(&desc, sizeof(Descriptor), 1, file);
-    fclose(file);
-
-	write_fat(fs);
+    fwrite(&zero, sizeof(int), 1, file);
 }
 
 int main(int argc, char** argv) {

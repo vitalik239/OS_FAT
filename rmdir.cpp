@@ -15,74 +15,67 @@ int main(int agrc, char** argv) {
     *dir_name = '\0';
     dir_name++;
 
-    int node = find_by_name(fs, T_DIR, path);
+    Descriptor dir = find_by_name(fs, T_DIR, path);
+    Descriptor last;
 
-    Descriptor des;
-    FILE* file = open_block(fs, fs.root_block + node);
-    fread(&des, sizeof(des), 1, file);
-    fseek(file, -sizeof(Descriptor), SEEK_CUR);
-    des.size--;
-    fwrite(&des, sizeof(Descriptor), 1, file);
-    fclose(file);
-
-    int prev = node, curr = fs.fat[node], last;
+    int prev = dir.fat_pos, curr = fs.fat[prev], descs;
     while (curr != fs.fat[curr]) {
         prev = curr;
         curr = fs.fat[curr];
     }
-    file = open_block(fs, fs.root_block + curr);
-    fseek(file, (des.size % INTS_IN_BLOCK) * sizeof(int), SEEK_CUR);
-    fread(&last, sizeof(int), 1, file);
-    fclose(file);
 
-    if (des.size % INTS_IN_BLOCK == 0) {
-        fs.fat[prev] = prev;
-        fs.fat[curr] = -1;
+    FILE* file = open_block(fs, fs.root_block + curr);
+    fread(&descs, sizeof(int), 1, file);
+    fseek(file, (descs - 1) * sizeof(Descriptor), SEEK_CUR);
+    fread(&last, sizeof(Descriptor), 1, file);
+
+    descs--;
+    if (descs == 0) {
+        if (dir.fat_pos == curr) {
+            fseek(file, 0, SEEK_SET);
+            fwrite(&descs, sizeof(int), 1, file);
+            fclose(file);
+            return 0;
+        } else {
+            fs.fat[curr] = -1;
+            fs.fat[prev] = prev;
+        }
+    } else {
+        fseek(file, 0, SEEK_SET);
+        fwrite(&descs, sizeof(int), 1, file);
     }
-
-    Descriptor last_des;
-    file = open_block(fs, fs.root_block + last);
-    fread(&last_des, sizeof(des), 1, file);
     fclose(file);
-    if ((last_des.type == T_DIR) && (strcmp(last_des.title, dir_name) == 0)) {
+
+    if ((last.type == T_DIR) && (strcmp(last.title, dir_name) == 0)) {
         remove_dir(fs, last);
         write_fat(fs);
         return 0;
     }
 
-    curr = node;
-    int next = fs.fat[node];
-    int list[INTS_IN_BLOCK];
-    int left = des.size;
+    Descriptor des;
+    int curr_block = dir.fat_pos;
 
-    while (curr != next) {
-        curr = next;
-        next = fs.fat[next];
-
-        file = open_block(fs, fs.root_block + curr);
-        fread(list, sizeof(int), INTS_IN_BLOCK, file);
-        fclose(file);
-
-        for (int i = 0; i < min(INTS_IN_BLOCK, left); i++) {
-            int check = list[i];
-            file = open_block(fs, fs.root_block + check);
-            fread(&des, sizeof(des), 1, file);
-            fclose(file);
+    while (true) {
+        file = open_block(fs, fs.root_block + curr_block);
+        fread(&descs, sizeof(int), 1, file);
+        for (int i = 0; i < descs; i++) {
+            fread(&des, sizeof(Descriptor), 1, file);
             if ((des.type == T_DIR) && (strcmp(des.title, dir_name) == 0)) {
-                remove_dir(fs, check);
-                file = open_block(fs, fs.root_block + curr);
-                fseek(file, sizeof(int) * i, SEEK_CUR);
-                fwrite(&last, sizeof(int), 1, file);
-                fclose(file);
+                remove_dir(fs, des);
+                fseek(file, -sizeof(Descriptor), SEEK_CUR);
+                fwrite(&last, sizeof(Descriptor), 1, file);
                 write_fat(fs);
                 return 0;
             }
         }
+        fclose(file);
 
-        if (left >= INTS_IN_BLOCK) {
-            left -= INTS_IN_BLOCK;
+        if (curr_block == fs.fat[curr_block]) {
+            break;
         }
+        curr_block = fs.fat[curr_block];
     }
-    printf("Something went wrong! File missed");
+
+    printf("Something went wrong! Directory missed");
     return 0;
 }

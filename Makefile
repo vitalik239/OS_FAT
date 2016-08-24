@@ -22,12 +22,15 @@ run:
 	./ls test /dir1
 	./export test /dir1/gen.cpp gen.cpp
 	./rm test /dir1/gen.cpp
+	./ls test /dir1
 	./import test ./general.cpp /dir1/gen.cpp
+	./ls test /dir1
 	./export test /dir1/gen.cpp gen.cpp
+	./ls test /dir1
 	cmp gen.cpp general.cpp
 	./rmdir test /dir1
-	./ls test /
 
+	
 clean:
 	rm -rf test gen.cpp	
 	rm -rf *.o *.dSYM
