@@ -24,8 +24,8 @@ int get_empty_block(fs_info& fs) {
             return i;
         }
     }
-    fprintf(stderr, "Not enough space");
-    exit(0);
+    fprintf(stderr, "Not enough space\n");
+    return -1;
 }
 
 void read_fat(fs_info& fs) {

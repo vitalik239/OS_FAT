@@ -16,7 +16,11 @@ int main(int agrc, char** argv) {
     dir_name++;
 
     Descriptor dir = find_by_name(fs, T_DIR, path);
-    Descriptor last;
+    Descriptor last = find_child(fs, dir, T_DIR, dir_name);
+    if (last.fat_pos < 0) {
+        printf("There is no such dir\n");
+        exit(0);
+    }
 
     int prev = dir.fat_pos, curr = fs.fat[prev], descs;
     while (curr != fs.fat[curr]) {
@@ -68,6 +72,6 @@ int main(int agrc, char** argv) {
         curr_block = fs.fat[curr_block];
     }
 
-    printf("Something went wrong! Directory missed");
+    printf("Something went wrong! Directory missed\n");
     return 0;
 }

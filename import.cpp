@@ -48,6 +48,11 @@ int main(int agrc, char** argv) {
     while ((bytes = fread(buffer, 1, sizeof(buffer), fin)) > 0) {
         nw_file.file_size += bytes;
         fs.fat[cur] = get_empty_block(fs);
+        if (fs.fat[cur] < 0) {
+            fs.fat[cur] = cur;
+            remove_file(fs, nw_file);
+            return 0;
+        }
         cur = fs.fat[cur];
         fout = open_block(fs, fs.root_block + cur);
         fwrite(buffer, 1, bytes, fout);
