@@ -26,26 +26,17 @@ int main(int agrc, char** argv) {
 
     FILE* file = open_block(fs, fs.root_block + curr);
     fread(&descs, sizeof(int), 1, file);
-    fseek(file, (descs - 1) * sizeof(Descriptor), SEEK_CUR);
-    fread(&last, sizeof(Descriptor), 1, file);
-
     descs--;
-    if (descs == 0) {
-        if (dir.fat_pos == curr) {
-            fseek(file, 0, SEEK_SET);
-            fwrite(&descs, sizeof(int), 1, file);
-            fclose(file);
-            return 0;
-        } else {
-            fs.fat[curr] = -1;
-            fs.fat[prev] = prev;
-        }
-    } else {
-        fseek(file, 0, SEEK_SET);
-        fwrite(&descs, sizeof(int), 1, file);
-    }
-
+    fseek(file, descs * sizeof(Descriptor), SEEK_CUR);
+    fread(&last, sizeof(Descriptor), 1, file);
+    fseek(file, 0, SEEK_SET);
+    fwrite(&descs, sizeof(int), 1, file);
     fclose(file);
+
+    if ((descs == 0) && (dir.fat_pos != curr)) {
+        fs.fat[curr] = -1;
+        fs.fat[prev] = prev;
+    }
 
     if ((last.type == T_FILE) && (strcmp(last.title, file_name) == 0)) {
         remove_file(fs, last);
@@ -65,6 +56,7 @@ int main(int agrc, char** argv) {
                 remove_file(fs, des);
                 fseek(file, -sizeof(Descriptor), SEEK_CUR);
                 fwrite(&last, sizeof(Descriptor), 1, file);
+                fclose(file);
                 write_fat(fs);
                 return 0;
             }

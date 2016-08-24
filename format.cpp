@@ -29,7 +29,7 @@ void init_fs() {
 	int fat_blocks = ceil((tot_blocks + 1.0) * 4.0 / (BLOCK_SIZE + 4.0));
 	int fat_size = tot_blocks - fat_blocks;
 
-    fs.fat.resize(fat_blocks * INTS_IN_BLOCK);
+    fs.fat.resize(fat_blocks * INTS_IN_BLOCK - 1);
 	for (int i = 0; i < fat_size; i++) {
 		fs.fat[i] = -1;
 	}

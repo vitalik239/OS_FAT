@@ -28,6 +28,9 @@ int main(int argc, char** argv) {
         }
         fclose(file);
         if (curr_block == fs.fat[curr_block]) {
+            for (int i = 0; i < fs.fat.size(); i++)
+                cerr << fs.fat[i] << " ";
+            cerr << endl;
             return 0;
         }
         curr_block = fs.fat[curr_block];
