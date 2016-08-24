@@ -28,6 +28,7 @@ int main(int argc, char** argv) {
         }
         fclose(file);
         if (curr_block == fs.fat[curr_block]) {
+            write_fat(fs);
             return 0;
         }
         curr_block = fs.fat[curr_block];
